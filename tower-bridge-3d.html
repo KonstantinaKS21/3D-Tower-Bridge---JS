@@ -1,0 +1,560 @@
+﻿<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+</head>
+
+<body>
+    <script src="three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script>
+
+        //създаване на сцена
+        scene = new THREE.Scene();
+
+
+        //позициониране на гледна точка
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 100000);
+        camera.position.z = 200;
+        scene.add(camera);
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+
+        //добавяне на светлина
+        var light = new THREE.PointLight();
+        light.position.set(3, 4, 5);
+        scene.add(light);
+        
+        document.body.appendChild(renderer.domElement);
+
+
+        //OrbitControls движение с мишката
+        var controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.10;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.rotateSpeed = 0.2;
+
+        const loader = new THREE.TextureLoader();
+
+        //фон
+        backgroundTexture = loader.load('london.png');
+        const backgroundGeometry = new THREE.SphereGeometry(2000, 32, 32);
+        const backgroundMaterial = new THREE.MeshBasicMaterial({
+            color: 'skyblue', side: THREE.DoubleSide
+        });
+        const background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        scene.add(background);
+
+        
+        //река
+        riverTexture = loader.load('river.jpg');
+        riverTexture.wrapS = THREE.RepeatWrapping;
+        riverTexture.wrapT = THREE.RepeatWrapping;
+        riverTexture.repeat.set(20, 2);
+        const riverGeometry = new THREE.BoxGeometry(2000, 350, 2);
+        const riverMaterial = new THREE.MeshBasicMaterial({
+            map: riverTexture
+        });
+
+        const river = new THREE.Mesh(riverGeometry, riverMaterial);
+        river.position.set(0, -12, -60);
+        river.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(river);
+
+
+
+        //основата, върху която са стъпили кулите
+        const length = 30,
+            width = 20;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(0, length); //start from top
+        shape.quadraticCurveTo(-width, length, -width, 0); //upper left
+        shape.quadraticCurveTo(-width, -length, 0, -length); //lower left
+        shape.quadraticCurveTo(width, -length, width, 0); //lower right
+        shape.quadraticCurveTo(width, length, 0, length); //upper right
+
+        
+       //baseTexture = loader.load('base.png');
+        const baseMaterial = new THREE.MeshBasicMaterial({
+            color: 0xD3D3D3
+        });
+
+        const extrudeSettings = {
+            steps: 2,
+            depth: 23,
+            bevelEnabled: true,
+            bevelThickness: 1,
+            bevelSize: 1,
+            bevelOffset: 2,
+            bevelSegments: 1
+        };
+        const baseGeomtetry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const leftBase = new THREE.Mesh(baseGeomtetry, baseMaterial);
+        leftBase.position.set(20, 10, -12);
+        leftBase.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+
+        const bigBaseShape = new THREE.Shape()
+            .moveTo(0, length + 10)
+            .quadraticCurveTo(-width, length + 10, - width, 0)
+            .quadraticCurveTo(-width, - length - 10, 0, - length - 10)
+            .quadraticCurveTo(width, - length - 10, width, 0)
+            .quadraticCurveTo(width, length + 10, 0, length + 10);
+
+        const extrudeSettingsBigBase = {
+            steps: 4,
+            depth: 12,
+            bevelEnabled: true,
+            bevelThickness: 1,
+            bevelSize: 1,
+            bevelOffset: 2,
+            bevelSegments: 1
+        };
+
+        const bigBaseGeometry = new THREE.ExtrudeGeometry(bigBaseShape, extrudeSettingsBigBase);
+        const bigBase = new THREE.Mesh(bigBaseGeometry, baseMaterial);
+        bigBase.position.set(20, 0, -12);
+        bigBase.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+
+        const baseSphereShape = new THREE.SphereGeometry(10, 32, 32);
+        const baseSphere = new THREE.Mesh(baseSphereShape, baseMaterial);
+        baseSphere.position.set(52.5, -2, -12);
+
+        const baseSphere2 = baseSphere.clone();
+        baseSphere2.position.set(-12.5, -2, -12);
+
+        //основна част на кулата - с тунела
+        const towerWidth = 12;
+        const towerHeight = 75;
+        const leftTowerShape = new THREE.Shape()
+            .moveTo(towerWidth, 0)
+            .lineTo(towerWidth, towerHeight * 2 / 3)
+            .lineTo(towerWidth - 1.5, towerHeight * 2 / 3 + 1.5)
+            .lineTo(towerWidth - 1.5, towerHeight * 4 / 5)
+            .lineTo(towerWidth / 2, towerHeight * 4 / 5)
+            .lineTo(towerWidth / 2 - 0.5, towerHeight - 1)
+            .lineTo(0.75, towerHeight - 1)
+            .lineTo(0, towerHeight + 2)
+            .lineTo(-0.75, towerHeight - 1)
+            .lineTo(-towerWidth / 2 + 0.5, towerHeight - 1)
+            .lineTo(-towerWidth / 2, towerHeight * 4 / 5)
+            .lineTo(-towerWidth + 1.5, towerHeight * 4 / 5)
+            .lineTo(-towerWidth + 1.5, towerHeight * 2 / 3 + 1.5)
+            .lineTo(-towerWidth, towerHeight * 2 / 3)
+            .lineTo(-towerWidth, 0)
+            .lineTo(-towerWidth * 2 / 3, 0)
+            .lineTo(-towerWidth * 2 / 3, towerHeight * 1 / 5)
+            .quadraticCurveTo(-towerWidth * 2 / 3, towerHeight * 0.3, 0, towerHeight * 0.3)
+            .quadraticCurveTo(towerWidth * 2 / 3, towerHeight * 0.3, towerWidth * 2 / 3, towerHeight * 1 / 5)
+            .lineTo(towerWidth * 2 / 3, 0)
+            .lineTo(towerWidth, 0);
+
+        towerTexture = loader.load('texture3-resized.png');
+        const towerMaterial = new THREE.MeshBasicMaterial({
+            map: towerTexture
+            //color: 0xF5F5DC
+        });
+        const towerGeometry = new THREE.ExtrudeGeometry(leftTowerShape, extrudeSettings);
+        const leftTower = new THREE.Mesh(towerGeometry, towerMaterial);
+        leftTower.position.set(20, 10, -20);
+
+        const rightTower = leftTower.clone();
+        rightTower.position.set(20, 10, -120);
+
+
+        //плътна стена
+        const solidWallWidth = 8;
+        const solidWallShape = new THREE.Shape()
+            .moveTo(solidWallWidth, 0)
+            .lineTo(solidWallWidth, towerHeight * 2 / 3)
+            .lineTo(solidWallWidth - 1.5, towerHeight * 2 / 3 + 1.5)
+            .lineTo(solidWallWidth - 1.5, towerHeight * 4 / 5)
+            .lineTo(solidWallWidth / 2, towerHeight * 4 / 5)
+            .lineTo(solidWallWidth / 2 - 0.5, towerHeight - 1)
+            .lineTo(0.75, towerHeight - 1)
+            .lineTo(0, towerHeight + 2)
+            .lineTo(-0.75, towerHeight - 1)
+            .lineTo(-solidWallWidth / 2 + 0.5, towerHeight - 1)
+            .lineTo(-solidWallWidth / 2, towerHeight * 4 / 5)
+            .lineTo(-solidWallWidth + 1.5, towerHeight * 4 / 5)
+            .lineTo(-solidWallWidth + 1.5, towerHeight * 2 / 3 + 1.5)
+            .lineTo(-solidWallWidth, towerHeight * 2 / 3)
+            .lineTo(-solidWallWidth, 0)
+            .lineTo(solidWallWidth, 0);
+
+        const extrudeSolidWallSettings = {
+            steps: 2,
+            depth: 12,
+            bevelEnabled: true,
+            bevelThickness: 1,
+            bevelSize: 0,
+            bevelOffset: 0,
+            bevelSegments: 1
+        };
+        const solidWallGeometry = new THREE.ExtrudeGeometry(solidWallShape, extrudeSolidWallSettings);
+        const solidWall = new THREE.Mesh(solidWallGeometry, towerMaterial);
+        solidWall.position.set(40, 10, -12.5);
+        solidWall.rotation.set(0, -Math.PI / 2, 0);
+
+        const solidWall2 = solidWall.clone();
+        solidWall2.position.set(0, 10, -12.5);
+        solidWall2.rotation.set(0, Math.PI / 2, 0);
+
+
+        //връх
+        const radiusTop2 = 7;
+        const radiusBottom2 = 12;
+        const heightCutCone = 27;
+        const radialSegmentsCutCone = 4;
+        const cutConeShape = new THREE.CylinderGeometry(radiusTop2, radiusBottom2, heightCutCone, radialSegmentsCutCone);
+        const cutConeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xC19770
+        });
+        const cutConeTop = new THREE.Mesh(cutConeShape, cutConeMaterial);
+        cutConeTop.position.set(20, 81, -12);
+        cutConeTop.rotation.set(0, Math.PI / 4, 0);
+
+
+        //обли цилиндри - дълга странична част на кулата
+        const radiusTop = 6;
+        const radiusBottom = 6;
+        const height = towerHeight * 2 / 3 + 4;
+        const radialSegments = 100;
+        const cylinderShape = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
+        const cylinderMaterial = new THREE.MeshBasicMaterial({
+            color: 0xC19770
+        });
+        const towerCylinder = new THREE.Mesh(cylinderShape, cylinderMaterial);
+        towerCylinder.position.set(2, 36, -2);
+
+        towerCylinder2 = towerCylinder.clone();
+        towerCylinder.position.set(38, 36, -2);
+
+        towerCylinder3 = towerCylinder.clone();
+        towerCylinder3.position.set(38, 36, -24);
+
+        towerCylinder4 = towerCylinder.clone();
+        towerCylinder4.position.set(2, 36, -24);
+
+
+        //обратни конуси
+        const radius = 6.5;
+        const heightUpsideDownCone = -12;
+        const radialSegmentsCone = 7;
+        const upsideDownConeShape = new THREE.ConeGeometry(radius, heightUpsideDownCone, radialSegmentsCone);
+        const upsideDownConeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xC19770
+        });
+        const upsideDownCone = new THREE.Mesh(upsideDownConeShape, upsideDownConeMaterial);
+        upsideDownCone.position.set(2, 59, -2);
+
+        const upsideDownCone2 = upsideDownCone.clone();
+        upsideDownCone2.position.set(38, 59, -2);
+
+        const upsideDownCone3 = upsideDownCone.clone();
+        upsideDownCone3.position.set(38, 59, -24);
+
+        const upsideDownCone4 = upsideDownCone.clone();
+        upsideDownCone4.position.set(2, 59, -24);
+
+
+        //призма с основа 7моъгълник - част от страничните кули
+        const radiusTop1 = 6.5;
+        const radiusBottom1 = 6.5;
+        const heightPrism = 15;
+        const radialSegmentsP = 7;
+        const prismShape = new THREE.CylinderGeometry(radiusTop1, radiusBottom1, heightPrism, radialSegmentsP);
+        const prismMaterial = new THREE.MeshBasicMaterial({
+            color: 0xC19770
+        });
+        const towerPrism = new THREE.Mesh(prismShape, prismMaterial);
+        towerPrism.position.set(2, 70, -2);
+
+        const towerPrism2 = towerPrism.clone();
+        towerPrism2.position.set(38, 70, -2);
+
+        const towerPrism3 = towerPrism.clone();
+        towerPrism3.position.set(38, 70, -24);
+
+        const towerPrism4 = towerPrism.clone();
+        towerPrism4.position.set(2, 70, -24);
+
+
+        //конуси за куличките най-горе на страничните кули
+        const heightCone = 17;
+        const coneShape = new THREE.ConeGeometry(radius, heightCone, radialSegmentsCone);
+        const coneMaterial = new THREE.MeshBasicMaterial({
+            color: 0xC19770
+        });
+        const cone = new THREE.Mesh(coneShape, coneMaterial);
+        cone.position.set(2, 84, -2);
+
+        const cone2 = cone.clone();
+        cone2.position.set(38, 84, -2);
+
+        const cone3 = cone.clone();
+        cone3.position.set(38, 84, -24);
+
+        const cone4 = cone.clone();
+        cone4.position.set(2, 84, -24);
+
+        //групиране на елементите на първата от двете основни кули
+        const towerGroup = new THREE.Group();
+        towerGroup.add(leftTower);
+        towerGroup.add(solidWall);
+        towerGroup.add(solidWall2);
+        towerGroup.add(cutConeTop);
+        towerGroup.add(towerCylinder);
+        towerGroup.add(towerCylinder2);
+        towerGroup.add(towerCylinder3);
+        towerGroup.add(towerCylinder4);
+        towerGroup.add(upsideDownCone);
+        towerGroup.add(upsideDownCone2);
+        towerGroup.add(upsideDownCone3);
+        towerGroup.add(upsideDownCone4);
+        towerGroup.add(towerPrism);
+        towerGroup.add(towerPrism2);
+        towerGroup.add(towerPrism3);
+        towerGroup.add(towerPrism4);
+        towerGroup.add(cone);
+        towerGroup.add(cone2);
+        towerGroup.add(cone3);
+        towerGroup.add(cone4);
+        towerGroup.add(leftBase);
+        towerGroup.add(bigBase);
+        towerGroup.add(baseSphere);
+        towerGroup.add(baseSphere2);
+        scene.add(towerGroup);
+
+        const towerGroup2 = towerGroup.clone();
+        towerGroup2.position.set(0, 0, -100);
+        scene.add(towerGroup2);
+
+
+        //горни прегради между двете основни кули
+        const paralelepipedWidth = 5;
+        const paralelepipedHeight = 100;
+        const paralelepipedDepth = 3;
+        const paralelepipedGeometry = new THREE.BoxGeometry(paralelepipedWidth, paralelepipedHeight, paralelepipedDepth);
+        const paralelepipedMaterial = new THREE.MeshBasicMaterial({
+            color: 'white'
+        });
+        const paralelepiped = new THREE.Mesh(paralelepipedGeometry, paralelepipedMaterial);
+        paralelepiped.position.set(33.5, towerHeight - 7, -70);
+        paralelepiped.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(paralelepiped);
+
+        const paralelepiped2 = paralelepiped.clone();
+        paralelepiped2.position.set(7.5, towerHeight - 7, -70);
+        paralelepiped2.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(paralelepiped2);
+
+
+        //външен мост
+        const outerBridgeShape = new THREE.BoxGeometry(30, 100, 5);
+        bridgeTexture = loader.load('bridge.png');
+        bridgeTexture.wrapS = THREE.RepeatWrapping;
+        bridgeTexture.wrapT = THREE.RepeatWrapping;
+        bridgeTexture.repeat.set(20, 2);
+        const outerBridgeMaterial = new THREE.MeshBasicMaterial({
+           map: bridgeTexture
+        });
+        const outerBridgeLeft = new THREE.Mesh(outerBridgeShape, outerBridgeMaterial);
+        outerBridgeLeft.position.set(20, 10, 54);
+        outerBridgeLeft.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(outerBridgeLeft);
+
+        const outerBridgeRight = outerBridgeLeft.clone();
+        outerBridgeRight.position.set(20, 10, -180);
+        outerBridgeRight.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(outerBridgeRight);
+
+        //долни перила на моста (външен)
+        banisterTexture = loader.load('banister.png');
+        banisterTexture.wrapS = THREE.RepeatWrapping;
+        banisterTexture.wrapT = THREE.RepeatWrapping;
+        banisterTexture.repeat.set(20, 2);
+        const banisterGeometry = new THREE.BoxGeometry(2, 100, 1.5);
+        const banisterMaterial = new THREE.MeshBasicMaterial({
+            map: banisterTexture
+        });
+        const frontLeftBanister = new THREE.Mesh(banisterGeometry, banisterMaterial);
+        frontLeftBanister.position.set(6, 13, 54);
+        frontLeftBanister.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(frontLeftBanister);
+
+        const frontRightBanister = frontLeftBanister.clone();
+        frontRightBanister.position.set(34, 13, 54);
+        frontRightBanister.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(frontRightBanister);
+
+        const backLeftBanister = frontLeftBanister.clone();
+        backLeftBanister.position.set(6, 13, -180);
+        backLeftBanister.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(backLeftBanister);
+
+        const backRightBanister = frontLeftBanister.clone();
+        backRightBanister.position.set(34, 13, -180);
+        backRightBanister.rotation.set(Math.PI / 2, 0, 0);
+        scene.add(backRightBanister);
+
+
+        //вътрешен мост
+        const innerBridgeShape = new THREE.BoxGeometry(30, 32, 5);
+        const innerBridgeMaterial = new THREE.MeshBasicMaterial({
+            map: bridgeTexture
+        });
+        const innerBridge1 = new THREE.Mesh(innerBridgeShape, innerBridgeMaterial);
+        innerBridge1.position.set(20, 10, -46);
+        innerBridge1.rotation.set(Math.PI / 2, 0, 0);
+
+        const innerBridge2 = innerBridge1.clone();
+        innerBridge2.position.set(20, 10, -78);
+        innerBridge2.rotation.set(Math.PI / 2, 0, 0);
+
+        //вътрешен мост перила
+        const innerBanisterGeometry = new THREE.BoxGeometry(2, 32, 1.5);
+        const innerBanisterMaterial = new THREE.MeshBasicMaterial({
+            map: banisterTexture
+        });
+        const innerBanister1 = new THREE.Mesh(innerBanisterGeometry, innerBanisterMaterial);
+        innerBanister1.position.set(6, 13, -46);
+        innerBanister1.rotation.set(Math.PI / 2, 0, 0);
+
+        innerBanister2 = innerBanister1.clone();
+        innerBanister2.position.set(34, 13, -46)
+        innerBanister2.rotation.set(Math.PI / 2, 0, 0);
+
+        innerBanister3 = innerBanister1.clone();
+        innerBanister3.position.set(6, 13, -78);
+        innerBanister3.rotation.set(Math.PI / 2, 0, 0);
+
+        innerBanister4 = innerBanister1.clone();
+        innerBanister4.position.set(34, 13, -78);
+        innerBanister4.rotation.set(Math.PI / 2, 0, 0);
+
+
+        //групиране на елементите на лявата половина на вътрешния мост
+        const innerBridgeLeftGroup = new THREE.Group();
+        innerBridgeLeftGroup.add(innerBridge1);
+        innerBridgeLeftGroup.add(innerBanister1);
+        innerBridgeLeftGroup.add(innerBanister2);
+        innerBridgeLeftGroup.rotation.set(Math.PI/6,0,0);
+        innerBridgeLeftGroup.position.set(0,-16,-8);
+        scene.add(innerBridgeLeftGroup);
+
+
+        //групиране на елементите на дясната половина на вътрешния мост
+        const innerBridgeRightGroup = new THREE.Group();
+        innerBridgeRightGroup.add(innerBridge2);
+        innerBridgeRightGroup.add(innerBanister3);
+        innerBridgeRightGroup.add(innerBanister4);
+        innerBridgeRightGroup.rotation.set(-Math.PI/6,0,0);
+        innerBridgeRightGroup.position.set(0,45,-10);
+        scene.add(innerBridgeRightGroup);
+
+
+        //въжета на моста
+        const ropeDownShape = new THREE.Shape();
+        ropeDownShape.moveTo(33.5, towerHeight - 7)
+                 .lineTo(34,towerHeight - 7)
+                 .quadraticCurveTo(24,towerHeight*2/5,70,10)
+                 .lineTo(65,10)
+                 .quadraticCurveTo(21,towerHeight*2/5,33.5, towerHeight-7);
+        const ropeMaterial = new THREE.MeshBasicMaterial({
+            color :0x6ea5ff
+        });
+        const extrudeRopeSettings = {
+            steps: 2,
+            depth: 1,
+            bevelEnabled: true,
+            bevelThickness: 1,
+            bevelSize: 0,
+            bevelOffset: 0,
+            bevelSegments: 1
+        };
+        const ropeDownGeometry = new THREE.ExtrudeGeometry(ropeDownShape, extrudeRopeSettings);
+        const ropeDown = new THREE.Mesh(ropeDownGeometry, ropeMaterial);
+        ropeDown.position.set(5,-1,-25);
+        ropeDown.rotation.set(Math.PI/12,Math.PI/2,Math.PI/2);
+
+        const ropeUpperShape = new THREE.Shape()
+                    .moveTo(33.5, towerHeight - 7)
+                    .lineTo(34,towerHeight - 7)
+                    .quadraticCurveTo(44,towerHeight*2/5 + 8,70,10)
+                    .lineTo(65,10)
+                    .quadraticCurveTo(41,towerHeight*2/5+ 8, 33.5, towerHeight - 7);
+
+        const ropeUpperGeometry = new THREE.ExtrudeGeometry(ropeUpperShape, extrudeRopeSettings);
+        const ropeUpper = new THREE.Mesh(ropeUpperGeometry, ropeMaterial);
+        ropeUpper.position.set(5,-1,-25);
+        ropeUpper.rotation.set(Math.PI/12,Math.PI/2,Math.PI/2);
+
+        const tubeShape = new THREE.Shape()
+                    .moveTo(0,0)
+                    .lineTo(2,0)
+                    .lineTo(2,16)
+                    .lineTo(0,18)
+                    .lineTo(0,0);
+        const tubeMaterial = new THREE.MeshBasicMaterial({
+            color: 'white'
+        });
+        const tubeGeometry = new THREE.ExtrudeGeometry(tubeShape, extrudeRopeSettings);
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        tube.position.set(6.75,13,26);
+        tube.rotation.set(0,-Math.PI/2,0);
+
+        const tube2 = tube.clone();
+        tube2.position.set(6.75,6,11);
+        tube2.rotation.set(0,-Math.PI/2,0);
+        tube2.applyMatrix4(new THREE.Matrix4().makeScale(1,2,1));
+
+        const ropes = new THREE.Group();
+        ropes.add(ropeDown);
+        ropes.add(ropeUpper);
+        ropes.add(tube);
+        ropes.add(tube2);
+        scene.add(ropes);
+
+        const ropes2 = ropes.clone();
+        ropes2.position.set(29,0,1);
+        scene.add(ropes2);
+
+        const ropes3 = ropes.clone();
+        ropes3.position.set(12,0,-126);
+        ropes3.rotation.set(0,Math.PI, 0);
+        scene.add(ropes3);
+
+        const ropes4 = ropes.clone();
+        ropes4.position.set(40,0,-126);
+        ropes4.rotation.set(0,Math.PI, 0);
+        scene.add(ropes4);
+
+        
+
+        function drawFrame() {
+            requestAnimationFrame(drawFrame);
+
+            controls.update();
+
+            renderer.render(scene, camera);
+        }
+        drawFrame();
+    </script>
+</body>
+
+</html>
